@@ -101,3 +101,41 @@ df.to_csv("cleaned_heart_dataset.csv", index=False)
 
 print("\nCleaned dataset saved.")
 
+
+# ------------------------------------------------
+# 3. EDA
+# ------------------------------------------------
+
+# Objective 1: Distribution of target classes
+print("\nTarget class counts:")
+print(df[target_col].value_counts())
+
+df[target_col].value_counts().plot(kind="bar")
+
+plt.title("Heart Disease Class Distribution")
+plt.xlabel("Target Class")
+plt.ylabel("Number of People")
+plt.tight_layout()
+plt.savefig("heart_target_distribution.png")
+plt.show()
+
+
+# Objective 2: Age distribution, if age column exists
+age_col = None
+
+for col in df.columns:
+    if col.lower().strip() == "age":
+        age_col = col
+        break
+
+if age_col is not None:
+    plt.figure()
+    sns.histplot(df[age_col], kde=True)
+
+    plt.title("Age Distribution")
+    plt.xlabel("Age")
+    plt.ylabel("Count")
+    plt.tight_layout()
+    plt.savefig("heart_age_distribution.png")
+    plt.show()
+
