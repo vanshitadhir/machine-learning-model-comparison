@@ -1,5 +1,3 @@
-# Heart Disease Prediction
-# Data Science and Machine Learning Project
 
 import pandas as pd
 import numpy as np
@@ -7,135 +5,137 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-
+from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
-# ------------------------------------------------
+# ==================================================
 # 1. LOAD DATASET
-# ------------------------------------------------
+# ==================================================
 
 df = pd.read_csv("C:/Users/Vanshita/Downloads/heart dataset.csv")
 
 print("First five rows:")
 print(df.head())
 
-print("\nDataset information:")
-print(df.info())
-
-print("\nStatistical summary:")
-print(df.describe(include="all"))
+print("\nLast five rows:")
+print(df.tail())
 
 print("\nDataset shape:")
 print(df.shape)
 
+print("\nDataset information:")
+print(df.info())
+
+print("\nDataset description:")
+print(df.describe())
+
+print("\nData types:")
+print(df.dtypes)
+
 print("\nMissing values:")
 print(df.isnull().sum())
 
-print("\nDuplicate rows:", df.duplicated().sum())
-
-# ------------------------------------------------
-# 2. PREPROCESSING
-# ------------------------------------------------
-
-# Remove duplicate rows
-df = df.drop_duplicates()
-
-# Find the target column
-# Common names include target, HeartDisease, output and diagnosis
-target_names = ["target", "heartdisease", "output", "diagnosis", "num"]
-
-target_col = None
-
-for col in df.columns:
-    clean_name = col.lower().replace(" ", "").replace("_", "")
-
-    if clean_name in target_names:
-        target_col = col
-        break
-
-if target_col is None:
-    raise ValueError(
-        "Target column not found. Check your CSV column names "
-        "and set target_col to the correct column."
-    )
-
-print("\nTarget column:", target_col)
-
-# Remove rows where the target is missing
-df = df.dropna(subset=[target_col])
-
-# Remove an ID column if present
-for col in df.columns:
-    if col.lower().strip() in ["id", "patientid"]:
-        df = df.drop(col, axis=1)
-
-# Fill missing values
-for col in df.columns:
-
-    if col == target_col:
-        continue
-
-    if df[col].dtype == "object":
-        df[col] = df[col].fillna(df[col].mode()[0])
-    else:
-        df[col] = df[col].fillna(df[col].median())
-
-print("\nMissing values after preprocessing:")
-print(df.isnull().sum())
-
-# Encode categorical columns into numbers
-encoder = LabelEncoder()
-
-for col in df.columns:
-    if df[col].dtype == "object":
-        df[col] = encoder.fit_transform(df[col].astype(str))
-
-# Save cleaned dataset
-df.to_csv("cleaned_heart_dataset.csv", index=False)
-
-print("\nCleaned dataset saved.")
+print("\nDuplicate rows:")
+print(df.duplicated().sum())
 
 
-# ------------------------------------------------
-# 3. EDA
-# ------------------------------------------------
+# ==================================================
+# OBJECTIVE 1: ANALYZE HEART DISEASE DISTRIBUTION
+# ==================================================
 
-# Objective 1: Distribution of target classes
-print("\nTarget class counts:")
-print(df[target_col].value_counts())
+print("\nHeart disease distribution:")
+print(df["target"].value_counts())
 
-df[target_col].value_counts().plot(kind="bar")
+df["target"].value_counts().sort_index().plot(kind="bar")
 
-plt.title("Heart Disease Class Distribution")
-plt.xlabel("Target Class")
-plt.ylabel("Number of People")
+plt.title("Heart Disease Distribution")
+plt.xlabel("Target (0 = No Disease, 1 = Disease)")
+plt.ylabel("Number of Patients")
 plt.tight_layout()
-plt.savefig("heart_target_distribution.png")
 plt.show()
 
 
-# Objective 2: Age distribution, if age column exists
-age_col = None
+# ==================================================
+# OBJECTIVE 2: ANALYZE AGE AND SEX
+# ==================================================
 
-for col in df.columns:
-    if col.lower().strip() == "age":
-        age_col = col
-        break
+# Age distribution
+sns.histplot(df["age"], bins=10, kde=True)
 
-if age_col is not None:
-    plt.figure()
-    sns.histplot(df[age_col], kde=True)
+plt.title("Age Distribution of Patients")
+plt.xlabel("Age")
+plt.ylabel("Number of Patients")
+plt.tight_layout()
+plt.show()
 
-    plt.title("Age Distribution")
-    plt.xlabel("Age")
-    plt.ylabel("Count")
+# Age compared with heart disease status
+sns.boxplot(x="target", y="age", data=df)
+
+plt.title("Age vs Heart Disease")
+plt.xlabel("Target (0 = No Disease, 1 = Disease)")
+plt.ylabel("Age")
+plt.tight_layout()
+plt.show()
+
+# Sex compared with heart disease status
+pd.crosstab(
+    df["sex"], df["target"]
+).plot(kind="bar")
+
+plt.title("Sex vs Heart Disease")
+plt.xlabel("Sex (0 or 1)")
+plt.ylabel("Number of Patients")
+plt.legend(["No Disease", "Heart Disease"])
+plt.tight_layout()
+plt.show()
+
+
+# ==================================================
+# OBJECTIVE 3: ANALYZE CHEST PAIN AND EXERCISE ANGINA
+# ==================================================
+
+pd.crosstab(
+    df["chest pain type"], df["target"]
+).plot(kind="bar")
+
+plt.title("Chest Pain Type vs Heart Disease")
+plt.xlabel("Chest Pain Type")
+plt.ylabel("Number of Patients")
+plt.legend(["No Disease", "Heart Disease"])
+plt.tight_layout()
+plt.show()
+
+pd.crosstab(
+    df["exercise angina"], df["target"]
+).plot(kind="bar")
+
+plt.title("Exercise Angina vs Heart Disease")
+plt.xlabel("Exercise Angina (0 = No, 1 = Yes)")
+plt.ylabel("Number of Patients")
+plt.legend(["No Disease", "Heart Disease"])
+plt.tight_layout()
+plt.show()
+
+
+# ==================================================
+# OBJECTIVE 4: ANALYZE MEDICAL MEASUREMENTS
+# ==================================================
+
+cols = [
+    "resting bp s",
+    "cholesterol",
+    "max heart rate",
+    "oldpeak"
+]
+
+for col in cols:
+    sns.boxplot(x="target", y=col, data=df)
+
+    plt.title(f"{col} vs Heart Disease")
+    plt.xlabel("Target (0 = No Disease, 1 = Disease)")
+    plt.ylabel(col)
     plt.tight_layout()
-    plt.savefig("heart_age_distribution.png")
     plt.show()
-
