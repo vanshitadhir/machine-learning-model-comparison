@@ -139,3 +139,27 @@ for col in cols:
     plt.ylabel(col)
     plt.tight_layout()
     plt.show()
+
+
+
+# ==================================================
+# OBJECTIVE 5: CORRELATION ANALYSIS
+# ==================================================
+
+corr = df.corr()
+
+print("\nCorrelation Matrix:")
+print(corr)
+
+plt.figure(figsize=(10, 7))
+
+sns.heatmap(
+    corr,
+    annot=True,
+    cmap="coolwarm",
+    fmt=".2f"
+)
+
+plt.title("Heart Dataset Correlation Heatmap")
+plt.tight_layout()
+plt.show()
